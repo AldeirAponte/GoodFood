@@ -1,5 +1,6 @@
 package com.example.goodfood.activities;
 
+import com.example.goodfood.BuildConfig;
 import android.app.Activity;
 import android.content.Intent;
 import android.net.Uri;
@@ -28,6 +29,7 @@ public class AgregarPlatoActivity extends AppCompatActivity {
     private EditText etNombre, etDescripcion, etPrecio;
     private ImageView imgPrevisualizacion;
     private Button btnSeleccionar, btnGuardar;
+
 
     private FirebaseFirestore mFirestore;
     private Uri rutaFotoLocal = null;
@@ -71,9 +73,9 @@ public class AgregarPlatoActivity extends AppCompatActivity {
 
     private void inicializarCloudinary() {
         Map<String, String> config = new HashMap<>();
-        config.put("cloud_name", "dtia8orq8");
-        config.put("api_key", "243286255584966");
-        config.put("api_secret", "klb_eOIzADga8mEaScqsZqxIfFI");
+        config.put("cloud_name", BuildConfig.CLOUDINARY_CLOUD_NAME);
+        config.put("api_key", BuildConfig.CLOUDINARY_API_KEY);
+        config.put("api_secret", BuildConfig.CLOUDINARY_API_SECRET);
         try {
             MediaManager.init(this, config);
         } catch (IllegalStateException e) {
