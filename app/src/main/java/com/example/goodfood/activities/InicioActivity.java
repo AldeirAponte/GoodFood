@@ -1,17 +1,17 @@
-package com.example.goodfood.adapters;
+/*package com.example.goodfood.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-import com.bumptech.glide.Glide;
+import com.bumptech.glide.Glide; // 🌟 IMPORTANTE: Asegurate de que este import se agregue
 import com.example.goodfood.R;
 import com.example.goodfood.models.Plato;
 import java.util.List;
-import java.util.Locale;
 
 public class PlatoAdapter extends RecyclerView.Adapter<PlatoAdapter.PlatoViewHolder> {
 
@@ -33,23 +33,18 @@ public class PlatoAdapter extends RecyclerView.Adapter<PlatoAdapter.PlatoViewHol
         Plato plato = listaPlatos.get(position);
         holder.tvNombre.setText(plato.getNombre());
         holder.tvDescripcion.setText(plato.getDescripcion());
-        holder.tvPrecio.setText(String.format(Locale.US, "$%.2f", plato.getPrecio()));
+        holder.tvPrecio.setText(String.format("$%.2f", plato.getPrecio()));
 
-        // Seteamos los textos fijos/de prueba
-        holder.tvRating.setText("4.7");
-        holder.tvTagTipo.setText("BIO");
-        holder.tvTagTiempo.setText("10 MIN");
-
-        // Carga eficiente de la imagen con Glide usando tu ID original 'imgPlato'
+        // 🌟 CORRECCIÓN DE IMAGEN: Glide descarga de forma eficiente la URL en segundo plano
         Glide.with(holder.itemView.getContext())
-                .load(plato.getUrlImagen())
-                .placeholder(android.R.drawable.ic_menu_gallery)
-                .error(android.R.drawable.stat_notify_error)
+                .load(plato.getUrlImagen()) // Extrae la URL de Cloudinary/API guardada en tu objeto Plato
+                .placeholder(android.R.drawable.ic_menu_gallery) // Imagen temporal mientras descarga
+                .error(android.R.drawable.stat_notify_error)      // Imagen si la URL está rota o no hay internet
                 .into(holder.imgPlato);
 
-        // Tu lógica original del carrito usando 'btnAgregar'
+        // Lógica del carrito
         holder.btnAgregar.setOnClickListener(v -> {
-            // Lógica del carrito
+            // Acá irá la lógica del carrito más adelante
         });
     }
 
@@ -59,19 +54,17 @@ public class PlatoAdapter extends RecyclerView.Adapter<PlatoAdapter.PlatoViewHol
     }
 
     public static class PlatoViewHolder extends RecyclerView.ViewHolder {
-        TextView tvNombre, tvDescripcion, tvPrecio, tvRating, tvTagTipo, tvTagTiempo;
-        ImageView imgPlato, btnAgregar; // Volvieron a tus nombres estables
+        TextView tvNombre, tvDescripcion, tvPrecio;
+        ImageView imgPlato;
+        Button btnAgregar;
 
         public PlatoViewHolder(@NonNull View itemView) {
             super(itemView);
             tvNombre = itemView.findViewById(R.id.tvNombrePlato);
             tvDescripcion = itemView.findViewById(R.id.tvDescripcionPlato);
             tvPrecio = itemView.findViewById(R.id.tvPrecioPlato);
-            tvRating = itemView.findViewById(R.id.tvRating);
-            tvTagTipo = itemView.findViewById(R.id.tvTagTipo);
-            tvTagTiempo = itemView.findViewById(R.id.tvTagTiempo);
             imgPlato = itemView.findViewById(R.id.imgPlato);
             btnAgregar = itemView.findViewById(R.id.btnAgregarCarrito);
         }
     }
-}
+}*/

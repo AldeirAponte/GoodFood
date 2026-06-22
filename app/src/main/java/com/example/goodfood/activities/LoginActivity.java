@@ -107,29 +107,28 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && mAuth.getCurrentUser() != null) {
-                        // 1. Obtenemos el UID único del usuario que acaba de entrar
                         String uid = mAuth.getCurrentUser().getUid();
 
-                        // 2. Vamos a buscar sus datos a la colección "usuarios" en Firestore
                         com.google.firebase.firestore.FirebaseFirestore.getInstance()
                                 .collection("usuarios")
                                 .document(uid)
                                 .get()
                                 .addOnSuccessListener(documentSnapshot -> {
-                                    String nombreReal = "";
+                                    String nombreReal = "Cliente";
+                                    String rol = "cliente"; // Por defecto
 
-                                    // Si el documento existe, sacamos el campo "nombre"
-                                    if (documentSnapshot.exists() && documentSnapshot.contains("nombre")) {
-                                        nombreReal = documentSnapshot.getString("nombre");
+                                    if (documentSnapshot.exists()) {
+                                        if (documentSnapshot.contains("nombre")) {
+                                            nombreReal = documentSnapshot.getString("nombre");
+                                        }
+                                        if (documentSnapshot.contains("rol")) {
+                                            rol = documentSnapshot.getString("rol"); // Extraemos "admin" o "cliente"
+                                        }
                                     }
 
-                                    // 3. Pasamos al Home llevando el nombre real de la base de datos
-                                    irAlInicio(nombreReal);
+                                    irAlInicio(nombreReal, rol);
                                 })
-                                .addOnFailureListener(e -> {
-                                    // Si falla Firestore por algo, pasamos igual con un nombre por defecto
-                                    irAlInicio("Cliente");
-                                });
+                                .addOnFailureListener(e -> irAlInicio("Cliente", "cliente"));
                     } else {
                         Toast.makeText(LoginActivity.this, "Error: " + task.getException().getMessage(), Toast.LENGTH_SHORT).show();
                     }
@@ -142,22 +141,50 @@ public class LoginActivity extends AppCompatActivity {
         mAuth.signInWithCredential(credential)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful() && mAuth.getCurrentUser() != null) {
-                        // Google ya nos da el nombre directamente en el perfil de Auth
-                        String nombreGoogle = mAuth.getCurrentUser().getDisplayName();
-                        if (nombreGoogle == null || nombreGoogle.isEmpty()) {
-                            nombreGoogle = "Cliente";
-                        }
-                        irAlInicio(nombreGoogle);
+                        String uid = mAuth.getCurrentUser().getUid();
+
+                        // 🌟 Vamos SIEMPRE a Firestore para traer el ROL real (cliente o admin)
+                        com.google.firebase.firestore.FirebaseFirestore.getInstance()
+                                .collection("usuarios")
+                                .document(uid)
+                                .get()
+                                .addOnSuccessListener(documentSnapshot -> {
+                                    String nombreReal = "Cliente";
+                                    String rol = "cliente"; // Por defecto si pasa algo raro
+
+                                    if (documentSnapshot.exists()) {
+                                        if (documentSnapshot.contains("nombre")) {
+                                            nombreReal = documentSnapshot.getString("nombre");
+                                        }
+                                        if (documentSnapshot.contains("rol")) {
+                                            rol = documentSnapshot.getString("rol"); // Extraemos "admin" o "cliente"
+                                        }
+                                    } else {
+                                        // Si el documento no existe en Firestore (ej: primer login con Google),
+                                        // usamos el nombre que nos da el perfil de Google directamente
+                                        if (mAuth.getCurrentUser().getDisplayName() != null) {
+                                            nombreReal = mAuth.getCurrentUser().getDisplayName();
+                                        }
+                                    }
+
+                                    // Pasamos ambos datos al inicio
+                                    irAlInicio(nombreReal, rol);
+                                })
+                                .addOnFailureListener(e -> {
+                                    // Si falla la red, por descarte entra como cliente genérico
+                                    irAlInicio("Cliente", "cliente");
+                                });
                     } else {
                         Toast.makeText(this, "Error de autenticación con Firebase", Toast.LENGTH_SHORT).show();
                     }
                 });
     }
 
-    private void irAlInicio(String nombreUsuario) {
+    private void irAlInicio(String nombreUsuario, String rol) {
         Toast.makeText(LoginActivity.this, "¡Inicio de sesión exitoso!", Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         intent.putExtra("nombre_usuario", nombreUsuario);
+        intent.putExtra("rol_usuario", rol);
         startActivity(intent);
         finish();
     }

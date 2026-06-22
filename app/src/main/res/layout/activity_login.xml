@@ -58,6 +58,7 @@
                     android:layout_height="wrap_content"
                     android:hint="Correo electrónico"
                     app:startIconDrawable="@android:drawable/sym_action_email">
+
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etLoginEmail"
                         android:layout_width="match_parent"
