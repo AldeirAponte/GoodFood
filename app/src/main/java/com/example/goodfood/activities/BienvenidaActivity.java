@@ -17,7 +17,7 @@ public class BienvenidaActivity extends AppCompatActivity {
         setContentView(R.layout.activity_bienvenida);
 
         Button btnEmpezar = findViewById(R.id.btnEmpezar);
-        TextView tvLoginLink = findViewById(R.id.tvLoginLink);
+        Button btnLogin = findViewById(R.id.btnLogin);
 
         btnEmpezar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -28,7 +28,7 @@ public class BienvenidaActivity extends AppCompatActivity {
             }
         });
 
-        tvLoginLink.setOnClickListener(new View.OnClickListener() {
+        btnLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 // ir a la pantalla de Login
