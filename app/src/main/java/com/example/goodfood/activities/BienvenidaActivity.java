@@ -17,7 +17,8 @@ public class BienvenidaActivity extends AppCompatActivity {
         setContentView(R.layout.activity_bienvenida);
 
         Button btnEmpezar = findViewById(R.id.btnEmpezar);
-        Link tvLoginLink = findViewById(R.id.tvLoginLink);
+        TextView tvLoginLink = findViewById(R.id.tvLoginLink);
+        TextView tvAboutLink = findViewById(R.id.tvAboutLink);
 
         btnEmpezar.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -33,6 +34,15 @@ public class BienvenidaActivity extends AppCompatActivity {
             public void onClick(View view) {
                 // ir a la pantalla de Login
                 Intent intent = new Intent(BienvenidaActivity.this, LoginActivity.class);
+                startActivity(intent);
+            }
+        });
+
+        tvAboutLink.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v){
+                //ir a pantalla de Saber Mas
+                Intent intent = new Intent(BienvenidaActivity.this, AboutActivity.class);
                 startActivity(intent);
             }
         });

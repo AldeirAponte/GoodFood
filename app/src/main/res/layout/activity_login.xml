@@ -14,13 +14,10 @@
         android:gravity="center_horizontal">
 
         <ImageView
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+            android:layout_width="90dp"
+            android:layout_height="90dp"
             android:layout_marginTop="48dp"
-            android:background="#006C49"
-            android:padding="16dp"
-            android:src="@drawable/gflogo"
-            app:tint="#FFFFFF" />
+            android:src="@drawable/gflogo"/>
 
         <TextView
             android:layout_width="wrap_content"
