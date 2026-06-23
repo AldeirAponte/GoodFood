@@ -12,8 +12,10 @@ import com.example.goodfood.R;
 import com.example.goodfood.models.Plato;
 import java.util.List;
 import java.util.Locale;
+import java.util.Random;
 
 public class PlatoAdapter extends RecyclerView.Adapter<PlatoAdapter.PlatoViewHolder> {
+
 
     private List<Plato> listaPlatos;
 
@@ -34,11 +36,9 @@ public class PlatoAdapter extends RecyclerView.Adapter<PlatoAdapter.PlatoViewHol
         holder.tvNombre.setText(plato.getNombre());
         holder.tvDescripcion.setText(plato.getDescripcion());
         holder.tvPrecio.setText(String.format(Locale.US, "$%.2f", plato.getPrecio()));
-
-        // Seteamos los textos fijos/de prueba
-        holder.tvRating.setText("4.7");
-        holder.tvTagTipo.setText("BIO");
-        holder.tvTagTiempo.setText("10 MIN");
+        holder.tvRating.setText(plato.getRating());
+        holder.tvTagTipo.setText(plato.getTipo());
+        holder.tvTagTiempo.setText(plato.getTiempo());
 
         // Carga eficiente de la imagen con Glide usando tu ID original 'imgPlato'
         Glide.with(holder.itemView.getContext())
