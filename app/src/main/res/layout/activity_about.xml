@@ -59,7 +59,7 @@
                 android:id="@+id/tvTitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Good Food: Comè bien, vivì mejor"
+                android:text="Good Food: Comé bien, viví mejor"
                 android:textColor="@color/on_surface"
                 android:textSize="28sp"
                 android:textStyle="bold" />

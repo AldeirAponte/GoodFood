@@ -53,34 +53,50 @@
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:hint="Correo electrónico"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     app:startIconDrawable="@android:drawable/sym_action_email"
-                    app:boxStrokeColor="#FF9800"
-                    app:hintTextColor="#FF9800">
+                    app:startIconTint="#006C49"
+                    app:boxStrokeColor="#006C49"
+                    app:hintTextColor="#006C49"
+                    app:hintEnabled="false"
+                    app:boxCornerRadiusTopStart="20dp"
+                    app:boxCornerRadiusTopEnd="20dp"
+                    app:boxCornerRadiusBottomStart="20dp"
+                    app:boxCornerRadiusBottomEnd="20dp"
+                    >
 
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etLoginEmail"
-                        android:background="@android:drawable/edit_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textEmailAddress"/>
+                        android:hint="Correo electrónico"
+                        android:inputType="textEmailAddress"
+                        android:textColor="#006C49"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <com.google.android.material.textfield.TextInputLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="16dp"
-                    android:hint="Contraseña"
+                    style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                     app:startIconDrawable="@android:drawable/ic_lock_lock"
-                    app:boxStrokeColor="#FF9800"
-                    app:hintTextColor="#FF9800"
-                    app:passwordToggleEnabled="true">
+                    app:passwordToggleEnabled="true"
+                    app:startIconTint="#006C49"
+                    app:boxStrokeColor="#006C49"
+                    app:hintTextColor="#006C49"
+                    app:hintEnabled="false"
+                    app:boxCornerRadiusTopStart="20dp"
+                    app:boxCornerRadiusTopEnd="20dp"
+                    app:boxCornerRadiusBottomStart="20dp"
+                    app:boxCornerRadiusBottomEnd="20dp"
+                    >
                     <com.google.android.material.textfield.TextInputEditText
                         android:id="@+id/etLoginPassword"
-                        android:background="@android:drawable/edit_text"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:inputType="textPassword"/>
+                        android:hint="Contraseña"
+                        android:inputType="textPassword"
+                        android:textColor="#006C49"/>
                 </com.google.android.material.textfield.TextInputLayout>
 
                 <Button
@@ -96,12 +112,35 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
-        <TextView
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
             android:layout_marginTop="24dp"
-            android:text="— O continúa con —"
-            android:textColor="#6F7A72"/>
+            android:layout_marginBottom="24dp">
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="@color/outline_variant" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="O continúa con"
+                android:textSize="14sp"
+                android:layout_marginStart="16dp"
+                android:layout_marginEnd="16dp" />
+
+            <View
+                android:layout_width="0dp"
+                android:layout_height="1dp"
+                android:layout_weight="1"
+                android:background="@color/outline_variant" />
+
+        </LinearLayout>
 
         <com.google.android.gms.common.SignInButton
             android:id="@+id/btnGoogleLogin"
