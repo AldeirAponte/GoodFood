@@ -33,7 +33,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_begin="403dp" />
+        app:layout_constraintGuide_percent="0.55" />
 
     <androidx.cardview.widget.CardView
         android:layout_width="match_parent"
@@ -48,12 +48,12 @@
         app:layout_constraintTop_toBottomOf="@id/guideline">
 
         <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical"
-        android:paddingTop="36dp"
-        android:paddingHorizontal="24dp"
-        android:paddingBottom="16dp">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:paddingTop="36dp"
+            android:paddingHorizontal="24dp"
+            android:paddingBottom="16dp">
 
             <TextView
                 android:id="@+id/tvTitle"
@@ -65,54 +65,62 @@
                 android:textStyle="bold" />
 
             <TextView
-            android:id="@+id/tvSubtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="Comida nutritiva del mejor restaurante, con entrega en minutos."
-            android:textColor="@color/on_surface_variant"
-            android:textSize="15sp" />
-
-        <Button
-            android:id="@+id/btnEmpezar"
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:layout_marginTop="24dp"
-            android:text="Crear una Cuenta  ➔"
-            android:backgroundTint="@color/primary"
-            android:textColor="@color/on_primary"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="16dp" />
+                android:id="@+id/tvSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Comida nutritiva del mejor restaurante, con entrega en minutos."
+                android:textColor="@color/on_surface_variant"
+                android:textSize="15sp" />
 
             <Button
-                android:id="@+id/btnLogin"
+                android:id="@+id/btnEmpezar"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:layout_marginTop="24dp"
-                android:text="Iniciar Sesión  ➔"
+                android:text="Empezar  ➔"
                 android:backgroundTint="@color/primary"
                 android:textColor="@color/on_primary"
                 android:textSize="16sp"
                 android:textStyle="bold"
                 app:cornerRadius="16dp" />
 
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
+
             <LinearLayout
-                android:layout_width="205dp"
-                android:layout_height="50dp"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
                 android:layout_gravity="center_horizontal"
-                android:layout_marginBottom="8dp"
                 android:gravity="center"
-                android:orientation="horizontal">
+                android:layout_marginBottom="8dp">
 
                 <TextView
-                    android:id="@+id/saberMasLink"
+                    android:id="@+id/tvLoginLink"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:padding="8dp"
+                    android:text="INICIAR SESIÓN"
+                    android:textColor="@color/primary"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:padding="8dp"/>
+
+                <View
+                    android:layout_width="1dp"
+                    android:layout_height="16dp"
+                    android:layout_marginHorizontal="12dp"
+                    android:background="@color/outline_variant" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
                     android:text="Saber más"
                     android:textColor="@color/on_surface_variant"
-                    android:textSize="15sp" />
+                    android:textSize="13sp"
+                    android:padding="8dp"/>
             </LinearLayout>
 
         </LinearLayout>
