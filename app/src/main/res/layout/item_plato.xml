@@ -157,7 +157,7 @@
             android:backgroundTint="#FEA619"
             android:padding="8dp"
             android:src="@android:drawable/ic_input_add"
-            android:contentDescription="Agregar al carrito"
+            app:tint="#FFFFFF" android:contentDescription="Agregar al carrito"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="@id/layoutTags" />

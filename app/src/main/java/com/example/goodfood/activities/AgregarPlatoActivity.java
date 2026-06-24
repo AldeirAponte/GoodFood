@@ -89,7 +89,6 @@ public class AgregarPlatoActivity extends AppCompatActivity {
         try {
             MediaManager.init(this, config);
         } catch (IllegalStateException e) {
-            // Ya inicializado
         }
     }
 
@@ -119,7 +118,7 @@ public class AgregarPlatoActivity extends AppCompatActivity {
 
         double precio = Double.parseDouble(precioStr);
 
-        Toast.makeText(this, "Subiendo imagen a Cloudinary...", Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Subiendo imagen...", Toast.LENGTH_SHORT).show();
 
         MediaManager.get().upload(rutaFotoLocal)
                 .callback(new UploadCallback() {
@@ -139,7 +138,7 @@ public class AgregarPlatoActivity extends AppCompatActivity {
 
                     @Override
                     public void onError(String requestId, ErrorInfo error) {
-                        runOnUiThread(() -> Toast.makeText(AgregarPlatoActivity.this, "Error al subir a Cloudinary: " + error.getDescription(), Toast.LENGTH_LONG).show());
+                        runOnUiThread(() -> Toast.makeText(AgregarPlatoActivity.this, "Error al subir imagen: " + error.getDescription(), Toast.LENGTH_LONG).show());
                     }
 
                     @Override
@@ -170,7 +169,7 @@ public class AgregarPlatoActivity extends AppCompatActivity {
                     .set(nuevoPlato)
                     .addOnSuccessListener(aVoid -> {
                         runOnUiThread(() -> {
-                            Toast.makeText(AgregarPlatoActivity.this, "¡Plato e imagen guardados con éxito!", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(AgregarPlatoActivity.this, "¡Plato guardado con éxito!", Toast.LENGTH_SHORT).show();
                             finish();
                         });
                     })

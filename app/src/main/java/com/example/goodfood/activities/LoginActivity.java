@@ -145,7 +145,7 @@ public class LoginActivity extends AppCompatActivity {
                                     String nombreReal = null;
                                     String rol = "cliente";
 
-                                    // 🌟 1. Intentamos leer los datos desde Firestore si existen
+                                    // 1. Intentamos leer los datos desde Firestore si existen
                                     if (documentSnapshot.exists()) {
                                         if (documentSnapshot.contains("nombre")) {
                                             nombreReal = documentSnapshot.getString("nombre");
@@ -155,20 +155,21 @@ public class LoginActivity extends AppCompatActivity {
                                         }
                                     }
 
-                                    // 🌟 2. Salvavidas: Si Firestore no tiene el campo "nombre" o el documento no existe,
+                                    // 2. Salvavidas: Si Firestore no tiene el campo "nombre" o el documento no existe,
                                     // extraemos el nombre real directo de la cuenta de Google.
                                     if (nombreReal == null || nombreReal.trim().isEmpty()) {
                                         if (mAuth.getCurrentUser().getDisplayName() != null) {
                                             nombreReal = mAuth.getCurrentUser().getDisplayName();
                                         } else {
-                                            nombreReal = "Cliente"; // Último recurso si Google tampoco devuelve nombre
+                                            // si Google tampoco devuelve nombre colocamos por defecto
+                                            nombreReal = "Cliente";
                                         }
                                     }
 
                                     irAlInicio(nombreReal, rol);
                                 })
                                 .addOnFailureListener(e -> {
-                                    // Salvavidas de red: si falla Firestore, usamos el de Google directo en vez de poner "Cliente"
+                                    // si falla Firestore, usamos el dato de google directamente
                                     String nombreGoogle = mAuth.getCurrentUser().getDisplayName() != null ?
                                             mAuth.getCurrentUser().getDisplayName() : "Cliente";
                                     irAlInicio(nombreGoogle, "cliente");
@@ -180,7 +181,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void irAlInicio(String nombreUsuario, String rol) {
-        Toast.makeText(LoginActivity.this, "¡Inicio de sesión exitoso!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(LoginActivity.this, "¡Bienvenido!" + nombreUsuario, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         intent.putExtra("nombre_usuario", nombreUsuario);
         intent.putExtra("rol_usuario", rol);

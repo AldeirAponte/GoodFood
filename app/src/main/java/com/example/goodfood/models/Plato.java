@@ -1,6 +1,8 @@
 package com.example.goodfood.models;
 
-public class Plato {
+// 🌟 Al agregar "implements java.io.Serializable", Java ya sabe cómo empaquetar
+// este objeto para mandarlo entre pantallas a través de los Intents.
+public class Plato implements java.io.Serializable {
     private String id;
     private String nombre;
     private String descripcion;
@@ -10,7 +12,7 @@ public class Plato {
     private double precio;
     private String urlImagen;
 
-    // Constructor vacío obligatorio para que Firebase pueda mapear los datos
+    // Constructor vacío obligatorio para Firebase
     public Plato() {}
 
     // Constructor completo
@@ -25,7 +27,7 @@ public class Plato {
         this.urlImagen = urlImagen;
     }
 
-    // Getters y Setters
+    // Getters y Setters (quedan exactamente iguales)
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 

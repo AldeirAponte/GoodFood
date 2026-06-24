@@ -37,6 +37,16 @@
             android:name=".activities.LoginActivity"
             android:exported="false" />
 
+        <activity
+            android:name=".activities.PerfilActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".activities.CarritoActivity" />
+
+        <activity
+            android:name=".activities.PedidosActivity" />
+
     </application>
 
 </manifest>
