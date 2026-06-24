@@ -111,6 +111,31 @@
                 android:textColor="#006C49"/>
         </com.google.android.material.textfield.TextInputLayout>
 
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            app:startIconDrawable="@android:drawable/ic_lock_lock"
+            app:passwordToggleEnabled="true"
+            app:startIconTint="#006C49"
+            app:boxStrokeColor="#006C49"
+            app:hintTextColor="#006C49"
+            app:hintEnabled="false"
+            app:boxCornerRadiusTopStart="20dp"
+            app:boxCornerRadiusTopEnd="20dp"
+            app:boxCornerRadiusBottomStart="20dp"
+            app:boxCornerRadiusBottomEnd="20dp"
+            >
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/etConfirmarPassword"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Confirmar Contraseña"
+                android:inputType="textPassword"
+                android:textColor="#006C49"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
 
 
         <Button

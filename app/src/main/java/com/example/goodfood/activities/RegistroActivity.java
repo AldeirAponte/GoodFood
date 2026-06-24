@@ -26,7 +26,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 public class RegistroActivity extends AppCompatActivity {
 
-    private EditText etNombre, etEmail, etPassword;
+    private EditText etNombre, etEmail, etPassword, etConfirmarPassword;
     private Button btnRegistrar;
     private SignInButton btnGoogle; // El botón de Google
 
@@ -55,6 +55,7 @@ public class RegistroActivity extends AppCompatActivity {
         etNombre = findViewById(R.id.etNombre);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
+        etConfirmarPassword = findViewById(R.id.etConfirmarPassword);
         btnRegistrar = findViewById(R.id.btnRegistrar);
         btnGoogle = findViewById(R.id.btnGoogle);
 
@@ -81,12 +82,15 @@ public class RegistroActivity extends AppCompatActivity {
             String nombre = etNombre.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
+            String confirmarPassword = etConfirmarPassword.getText().toString().trim();
 
-            if (nombre.isEmpty() || email.isEmpty() || password.isEmpty()) {
+            if (nombre.isEmpty() || email.isEmpty() || password.isEmpty() || confirmarPassword.isEmpty()) {
                 Toast.makeText(this, "Por favor, completa todos los campos", Toast.LENGTH_SHORT).show();
             } else if (password.length() < 6) {
                 Toast.makeText(this, "La contraseña debe tener al menos 6 caracteres", Toast.LENGTH_SHORT).show();
-            } else {
+            } else  if (!password.equals(confirmarPassword)) {
+                Toast.makeText(this, "Las Contraseñas no coinciden", Toast.LENGTH_SHORT).show();
+            } else{
                 crearUsuarioConEmail(nombre, email, password);
             }
         });
