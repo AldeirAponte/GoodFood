@@ -28,7 +28,7 @@ public class RegistroActivity extends AppCompatActivity {
 
     private EditText etNombre, etEmail, etPassword, etConfirmarPassword;
     private Button btnRegistrar;
-    private SignInButton btnGoogle; // El botón de Google
+    private SignInButton btnGoogle;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirestore;
@@ -59,7 +59,7 @@ public class RegistroActivity extends AppCompatActivity {
         btnRegistrar = findViewById(R.id.btnRegistrar);
         btnGoogle = findViewById(R.id.btnGoogle);
 
-        // 4. Registrar el lanzador para el resultado de Google (Forma moderna de Android)
+        // 4. Registrar el lanzador para el resultado de Google
         googleSignInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -137,7 +137,6 @@ public class RegistroActivity extends AppCompatActivity {
         // Creamos la instancia del objeto directamente
         Usuario nuevoUsuario = new Usuario(uid, nombre, email, "cliente");
 
-        // Firebase Firestore es tan inteligente que sabe leer el objeto completo directamente
         mFirestore.collection("usuarios").document(uid)
                 .set(nuevoUsuario)
                 .addOnSuccessListener(aVoid -> {

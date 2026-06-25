@@ -2,7 +2,10 @@ package com.example.goodfood;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
@@ -12,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.goodfood.adapters.PlatoAdapter;
 import com.example.goodfood.models.Plato;
 import com.example.goodfood.activities.AgregarPlatoActivity;
+import com.example.goodfood.activities.PerfilActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,17 +25,28 @@ public class MainActivity extends AppCompatActivity {
     private TextView tvSaludo;
     private RecyclerView rvCatalogo;
     private PlatoAdapter adaptador;
-    private List<Plato> listaPlatos;
+    private List<Plato> listaPlatos;  // Contiene TODOS los platos de la BD
+    private List<Plato> listaFiltrada; // La que se muestra en pantalla
+
+    private EditText etBuscar;
+    private String categoriaActual = "Todos";
+
+    // Botones de categorías
+    private TextView btnCatTodos, btnCatVegano, btnCatCeliacos, btnCatProteicos;
+
+    // Nuevas variables para el Carrito con indicador flotante
+    private View btnVerCarrito;
+    private TextView tvContadorCarrito;
+
     private com.google.android.material.floatingactionbutton.FloatingActionButton fabAgregarPlato;
     private String rolUsuario;
-    private String nombreUsuario; // Variable única global
+    private String nombreUsuario;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // para ocultar la barra superior
         if (getSupportActionBar() != null) {
             getSupportActionBar().hide();
         }
@@ -40,16 +55,36 @@ public class MainActivity extends AppCompatActivity {
         tvSaludo = findViewById(R.id.tvSaludo);
         rvCatalogo = findViewById(R.id.rvCatalogo);
         fabAgregarPlato = findViewById(R.id.fabAgregarPlato);
+        etBuscar = findViewById(R.id.etBuscar);
 
-        // 2. Capturar los extras de forma limpia (Evitamos duplicación)
-        if (getIntent().hasExtra("nombre_usuario")) {
+        // Enlazar los nuevos componentes del Carrito
+        btnVerCarrito = findViewById(R.id.btnVerCarrito);
+        tvContadorCarrito = findViewById(R.id.tvContadorCarrito);
+
+        // Enlazar botones del menú horizontal
+        btnCatTodos = findViewById(R.id.btnCatTodos);
+        btnCatVegano = findViewById(R.id.btnCatVegano);
+        btnCatCeliacos = findViewById(R.id.btnCatCeliacos);
+        btnCatProteicos = findViewById(R.id.btnCatProteicos);
+
+        // 2. Capturar los extras
+        if (getIntent().hasExtra("nombre_usuario") && getIntent().getStringExtra("nombre_usuario") != null) {
             nombreUsuario = getIntent().getStringExtra("nombre_usuario");
         } else {
-            nombreUsuario = "Cliente";
+            com.google.firebase.auth.FirebaseUser usuarioActual = com.google.firebase.auth.FirebaseAuth.getInstance().getCurrentUser();
+            if (usuarioActual != null && usuarioActual.getDisplayName() != null && !usuarioActual.getDisplayName().isEmpty()) {
+                nombreUsuario = usuarioActual.getDisplayName();
+            } else {
+                nombreUsuario = "Cliente";
+            }
         }
-        rolUsuario = getIntent().getStringExtra("rol_usuario");
 
-        // Configurar el saludo en pantalla
+        if (getIntent().hasExtra("rol_usuario") && getIntent().getStringExtra("rol_usuario") != null) {
+            rolUsuario = getIntent().getStringExtra("rol_usuario");
+        } else {
+            rolUsuario = "cliente";
+        }
+
         tvSaludo.setText("¡Hola, " + nombreUsuario + "!");
 
         // 3. Validación de Rol para Administrador
@@ -59,75 +94,205 @@ public class MainActivity extends AppCompatActivity {
             fabAgregarPlato.setVisibility(View.GONE);
         }
 
-        // Configurar el click para ir a la pantalla de agregar plato
         fabAgregarPlato.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AgregarPlatoActivity.class);
             startActivity(intent);
         });
 
-        // 4. Configurar el RecyclerView
+        // Clic para ir a la pantalla del carrito de compras
+        btnVerCarrito.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, com.example.goodfood.activities.CarritoActivity.class);
+            intent.putExtra("lista_platos_catalogo", new ArrayList<>(listaPlatos));
+            startActivity(intent);
+        });
+
+        // 4. Configurar el RecyclerView con la lista filtrada
         rvCatalogo.setLayoutManager(new LinearLayoutManager(this));
         listaPlatos = new ArrayList<>();
-        adaptador = new PlatoAdapter(listaPlatos);
+        listaFiltrada = new ArrayList<>();
+
+        adaptador = new PlatoAdapter(listaFiltrada);
         rvCatalogo.setAdapter(adaptador);
 
-        // 5. Ejecución del hilo secundario para traer el menú
-        //cargarMenu();
+        // 5. Configurar los listeners para cada botón de categoría
+        btnCatTodos.setOnClickListener(v -> {
+            categoriaActual = "Todos";
+            aplicarFiltrosCombinados();
+        });
+        btnCatVegano.setOnClickListener(v -> {
+            categoriaActual = "Vegano";
+            aplicarFiltrosCombinados();
+        });
+        btnCatCeliacos.setOnClickListener(v -> {
+            categoriaActual = "Celíacos";
+            aplicarFiltrosCombinados();
+        });
+        btnCatProteicos.setOnClickListener(v -> {
+            categoriaActual = "Proteicos";
+            aplicarFiltrosCombinados();
+        });
+
+        // 6. CONFIGURAR EL BUSCADOR EN TIEMPO REAL
+        etBuscar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                aplicarFiltrosCombinados();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        // 7. BARRA DE NAVEGACION INFERIOR
+        com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
+        bottomNavigation.setSelectedItemId(R.id.nav_home);
+
+        bottomNavigation.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (id == R.id.nav_home) {
+                return true;
+            } else if (id == R.id.nav_search) {
+                etBuscar.requestFocus();
+                return true;
+            } else if (id == R.id.nav_orders) {
+                Intent intent = new Intent(MainActivity.this, com.example.goodfood.activities.PedidosActivity.class);
+                intent.putExtra("lista_platos_catalogo", new ArrayList<>(listaPlatos));
+                startActivity(intent);
+                return true;
+            } else if (id == R.id.nav_profile) {
+                Intent intent = new Intent(MainActivity.this, PerfilActivity.class);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // 🌟 Cada vez que el Admin vuelva de agregar un plato,
-        // este metodo se dispara y recarga la lista automáticamente desde Firestore
         cargarMenu();
+        actualizarInterfazCarrito();
+        com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
+        if (bottomNavigation != null) {
+            bottomNavigation.setSelectedItemId(R.id.nav_home);
+        }
+    }
+
+    // 8. NUEVO METODO: Refresca el circulito rojo flotante con los cambios del CarritoManager
+    public void actualizarInterfazCarrito() {
+        int cantidadTotal = CarritoManager.getInstance().getCantidadTotal();
+        if (cantidadTotal > 0) {
+            tvContadorCarrito.setText(String.valueOf(cantidadTotal));
+            tvContadorCarrito.setVisibility(View.VISIBLE);
+        } else {
+            tvContadorCarrito.setVisibility(View.GONE);
+        }
     }
 
     private void cargarMenu() {
-        // Hilo secundario para buscar en internet sin congelar la app
         Thread cargarPlatos = new Thread(new Runnable() {
             @Override
             public void run() {
-                // Consultamos directamente la base de datos real de Firestore
                 com.google.firebase.firestore.FirebaseFirestore.getInstance()
                         .collection("platos")
                         .get()
                         .addOnSuccessListener(queryDocumentSnapshots -> {
-                            // Volvemos al hilo principal (UI Thread) para actualizar el RecyclerView
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
                                     listaPlatos.clear();
 
-                                    // Si Firestore tiene platos reales cargados, los añade
                                     if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
                                         for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                                             Plato plato = doc.toObject(Plato.class);
                                             if (plato != null) {
+                                                // le metemos el ID del documento de Firestore si el objeto no lo trae
+                                                if (plato.getId() == null || plato.getId().isEmpty()) {
+                                                    plato.setId(doc.getId());
+                                                }
                                                 listaPlatos.add(plato);
                                             }
                                         }
                                     } else {
-                                        // PLAN DE RESPALDO: Si la base de datos está vacía, muestra platos locales con imágenes reales
+                                        // por si llegara a fallar la base de datos con los platos ponemos unos 3 platos de ejemplo
                                         Toast.makeText(MainActivity.this, "Catálogo vacío. Cargando menú local.", Toast.LENGTH_SHORT).show();
-                                        listaPlatos.add(new Plato("1", "Ensalada Caesar de Pollo", "Pollo premium, lechuga orgánica, croutons integrales.", 4500.0, "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500"));
-                                        listaPlatos.add(new Plato("2", "Wrap Veggie de Palta", "Tortilla integral, palta, tomates cherry, espinaca.", 3800.0, "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500"));
-                                        listaPlatos.add(new Plato("3", "Wok de Fideos y Vegetales", "Mix de verduras salteadas con fideos integrales.", 4800.0, "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500"));
+                                        listaPlatos.add(new Plato("1", "Ensalada Caesar de Pollo", "Pollo premium, lechuga orgánica, croutons integrales.", "Vegano", "4.7", "10 MIN", 4500.0, "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500"));
+                                        listaPlatos.add(new Plato("2", "Wrap Veggie de Palta", "Tortilla integral, palta, tomates cherry, espinaca.", "Celíacos", "4.6", "15 MIN", 3800.0, "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500"));
+                                        listaPlatos.add(new Plato("3", "Wok de Fideos y Vegetales", "Mix de verduras salteadas con fideos integrales.", "Proteicos", "4.8", "20 MIN", 4800.0, "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500"));
                                     }
-
-                                    // Avisamos al adaptador que dibuje los cambios en la pantalla
-                                    adaptador.notifyDataSetChanged();
+                                    aplicarFiltrosCombinados();
                                 }
                             });
                         })
                         .addOnFailureListener(e -> {
-                            // Manejo seguro por si falla internet por completo
                             runOnUiThread(() -> Toast.makeText(MainActivity.this, "Error de red al cargar platos", Toast.LENGTH_SHORT).show());
                         });
             }
         });
-
-        // Iniciamos el hilo secundario
         cargarPlatos.start();
+    }
+
+    private void aplicarFiltrosCombinados() {
+        listaFiltrada.clear();
+        String textoBusqueda = etBuscar.getText().toString().toLowerCase().trim();
+
+        for (Plato p : listaPlatos) {
+            boolean coincideCategoria = categoriaActual.equals("Todos") ||
+                    (p.getTipo() != null && p.getTipo().equalsIgnoreCase(categoriaActual));
+
+            boolean coincideTexto = textoBusqueda.isEmpty() ||
+                    (p.getNombre() != null && p.getNombre().toLowerCase().contains(textoBusqueda)) ||
+                    (p.getDescripcion() != null && p.getDescripcion().toLowerCase().contains(textoBusqueda));
+
+            if (coincideCategoria && coincideTexto) {
+                listaFiltrada.add(p);
+            }
+        }
+
+        adaptador.notifyDataSetChanged();
+        actualizarEstiloBotones(categoriaActual);
+    }
+
+    private void actualizarEstiloBotones(String categoriaSeleccionada) {
+        int colorInactivoFondo = android.graphics.Color.parseColor("#A3F5C9");
+        int colorInactivoTexto = android.graphics.Color.parseColor("#0A4D34");
+
+        btnCatTodos.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colorInactivoFondo));
+        btnCatTodos.setTextColor(colorInactivoTexto);
+
+        btnCatVegano.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colorInactivoFondo));
+        btnCatVegano.setTextColor(colorInactivoTexto);
+
+        btnCatCeliacos.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colorInactivoFondo));
+        btnCatCeliacos.setTextColor(colorInactivoTexto);
+
+        btnCatProteicos.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colorInactivoFondo));
+        btnCatProteicos.setTextColor(colorInactivoTexto);
+
+        int colorActivoFondo = android.graphics.Color.parseColor("#0A4D34");
+        int colorActivoTexto = android.graphics.Color.parseColor("#FFFFFF");
+
+        switch (categoriaSeleccionada) {
+            case "Todos":
+                btnCatTodos.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colorActivoFondo));
+                btnCatTodos.setTextColor(colorActivoTexto);
+                break;
+            case "Vegano":
+                btnCatVegano.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colorActivoFondo));
+                btnCatVegano.setTextColor(colorActivoTexto);
+                break;
+            case "Celíacos":
+                btnCatCeliacos.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colorActivoFondo));
+                btnCatCeliacos.setTextColor(colorActivoTexto);
+                break;
+            case "Proteicos":
+                btnCatProteicos.setBackgroundTintList(android.content.res.ColorStateList.valueOf(colorActivoFondo));
+                btnCatProteicos.setTextColor(colorActivoTexto);
+                break;
+        }
     }
 }

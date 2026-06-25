@@ -40,11 +40,6 @@ public class LoginActivity extends AppCompatActivity {
 
         mAuth = FirebaseAuth.getInstance();
 
-        etEmail = findViewById(R.id.etLoginEmail);
-        etPassword = findViewById(R.id.etLoginPassword);
-        btnIngresar = findViewById(R.id.btnIngresar);
-        tvIrARegistro = findViewById(R.id.tvIrARegistro);
-
         // Configuración obligatoria para Google Auth
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken("365154847322-el7i3kfkft262i43tvc5r3laicb7uko8.apps.googleusercontent.com")
@@ -94,7 +89,6 @@ public class LoginActivity extends AppCompatActivity {
             googleSignInLauncher.launch(signInIntent);
         });
 
-        // Por si entró acá pero no tiene cuenta, lo mandamos a la pantalla de Registro
         tvIrARegistro.setOnClickListener(v -> {
             Intent intent = new Intent(LoginActivity.this, RegistroActivity.class);
             startActivity(intent);
@@ -102,7 +96,7 @@ public class LoginActivity extends AppCompatActivity {
         });
     }
 
-    // LOGEAR USUARIO Y TRAER SU NOMBRE DE LA BASE DE DATOS
+    // LOGEAR USUARIO Y TRAER SU NOMBRE DE LA BASE DE DATOS (LOGIN TRADICIONAL)
     private void loguearUsuario(String email, String password) {
         mAuth.signInWithEmailAndPassword(email, password)
                 .addOnCompleteListener(task -> {
@@ -115,14 +109,14 @@ public class LoginActivity extends AppCompatActivity {
                                 .get()
                                 .addOnSuccessListener(documentSnapshot -> {
                                     String nombreReal = "Cliente";
-                                    String rol = "cliente"; // Por defecto
+                                    String rol = "cliente";
 
                                     if (documentSnapshot.exists()) {
-                                        if (documentSnapshot.contains("nombre")) {
+                                        if (documentSnapshot.contains("nombre") && documentSnapshot.getString("nombre") != null) {
                                             nombreReal = documentSnapshot.getString("nombre");
                                         }
                                         if (documentSnapshot.contains("rol")) {
-                                            rol = documentSnapshot.getString("rol"); // Extraemos "admin" o "cliente"
+                                            rol = documentSnapshot.getString("rol");
                                         }
                                     }
 
@@ -143,36 +137,42 @@ public class LoginActivity extends AppCompatActivity {
                     if (task.isSuccessful() && mAuth.getCurrentUser() != null) {
                         String uid = mAuth.getCurrentUser().getUid();
 
-                        // 🌟 Vamos SIEMPRE a Firestore para traer el ROL real (cliente o admin)
                         com.google.firebase.firestore.FirebaseFirestore.getInstance()
                                 .collection("usuarios")
                                 .document(uid)
                                 .get()
                                 .addOnSuccessListener(documentSnapshot -> {
-                                    String nombreReal = "Cliente";
-                                    String rol = "cliente"; // Por defecto si pasa algo raro
+                                    String nombreReal = null;
+                                    String rol = "cliente";
 
+                                    // 1. Intentamos leer los datos desde Firestore si existen
                                     if (documentSnapshot.exists()) {
                                         if (documentSnapshot.contains("nombre")) {
                                             nombreReal = documentSnapshot.getString("nombre");
                                         }
                                         if (documentSnapshot.contains("rol")) {
-                                            rol = documentSnapshot.getString("rol"); // Extraemos "admin" o "cliente"
-                                        }
-                                    } else {
-                                        // Si el documento no existe en Firestore (ej: primer login con Google),
-                                        // usamos el nombre que nos da el perfil de Google directamente
-                                        if (mAuth.getCurrentUser().getDisplayName() != null) {
-                                            nombreReal = mAuth.getCurrentUser().getDisplayName();
+                                            rol = documentSnapshot.getString("rol");
                                         }
                                     }
 
-                                    // Pasamos ambos datos al inicio
+                                    // 2. Salvavidas: Si Firestore no tiene el campo "nombre" o el documento no existe,
+                                    // extraemos el nombre real directo de la cuenta de Google.
+                                    if (nombreReal == null || nombreReal.trim().isEmpty()) {
+                                        if (mAuth.getCurrentUser().getDisplayName() != null) {
+                                            nombreReal = mAuth.getCurrentUser().getDisplayName();
+                                        } else {
+                                            // si Google tampoco devuelve nombre colocamos por defecto
+                                            nombreReal = "Cliente";
+                                        }
+                                    }
+
                                     irAlInicio(nombreReal, rol);
                                 })
                                 .addOnFailureListener(e -> {
-                                    // Si falla la red, por descarte entra como cliente genérico
-                                    irAlInicio("Cliente", "cliente");
+                                    // si falla Firestore, usamos el dato de google directamente
+                                    String nombreGoogle = mAuth.getCurrentUser().getDisplayName() != null ?
+                                            mAuth.getCurrentUser().getDisplayName() : "Cliente";
+                                    irAlInicio(nombreGoogle, "cliente");
                                 });
                     } else {
                         Toast.makeText(this, "Error de autenticación con Firebase", Toast.LENGTH_SHORT).show();
@@ -181,7 +181,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void irAlInicio(String nombreUsuario, String rol) {
-        Toast.makeText(LoginActivity.this, "¡Inicio de sesión exitoso!", Toast.LENGTH_SHORT).show();
+        Toast.makeText(LoginActivity.this, "¡Bienvenido!" + nombreUsuario, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         intent.putExtra("nombre_usuario", nombreUsuario);
         intent.putExtra("rol_usuario", rol);
