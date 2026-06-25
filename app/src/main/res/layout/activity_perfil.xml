@@ -178,6 +178,7 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:layout_margin="20dp"
+        android:layout_marginBottom="10dp"
         android:text="Cerrar Sesión"
         android:backgroundTint="#D32F2F"
         android:textColor="#FFFFFF"

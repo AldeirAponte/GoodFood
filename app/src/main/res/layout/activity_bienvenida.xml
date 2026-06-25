@@ -73,10 +73,6 @@
                 android:textColor="@color/on_surface_variant"
                 android:textSize="15sp" />
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
 
             <Button
                 android:id="@+id/btnEmpezar"
@@ -89,6 +85,11 @@
                 android:textSize="16sp"
                 android:textStyle="bold"
                 app:cornerRadius="16dp" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1" />
 
             <LinearLayout
                 android:layout_width="wrap_content"

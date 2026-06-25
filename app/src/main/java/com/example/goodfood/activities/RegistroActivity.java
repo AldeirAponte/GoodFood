@@ -4,6 +4,7 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -29,6 +30,7 @@ public class RegistroActivity extends AppCompatActivity {
     private EditText etNombre, etEmail, etPassword, etConfirmarPassword;
     private Button btnRegistrar;
     private SignInButton btnGoogle;
+    private TextView tvIrALogin;
 
     private FirebaseAuth mAuth;
     private FirebaseFirestore mFirestore;
@@ -58,6 +60,7 @@ public class RegistroActivity extends AppCompatActivity {
         etConfirmarPassword = findViewById(R.id.etConfirmarPassword);
         btnRegistrar = findViewById(R.id.btnRegistrar);
         btnGoogle = findViewById(R.id.btnGoogle);
+        tvIrALogin = findViewById(R.id.tvIrALogin);
 
         // 4. Registrar el lanzador para el resultado de Google
         googleSignInLauncher = registerForActivityResult(
@@ -76,6 +79,13 @@ public class RegistroActivity extends AppCompatActivity {
                     }
                 }
         );
+
+        // añadimos el evento para que redirija al login
+        tvIrALogin.setOnClickListener(v -> {
+            Intent intent = new Intent(RegistroActivity.this, LoginActivity.class); // <-- Cambiá LoginActivity por el nombre exacto de tu clase de Login si varía
+            startActivity(intent);
+            finish(); // Cerramos Registro para que no quede acumulada en el historial de pantallas
+        });
 
         // 5. Clic del botón clásico (Email y Contraseña)
         btnRegistrar.setOnClickListener(v -> {
