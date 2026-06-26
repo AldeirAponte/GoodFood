@@ -39,6 +39,10 @@ public class AgregarPlatoActivity extends AppCompatActivity {
     private Uri rutaFotoLocal = null;
     private ActivityResultLauncher<Intent> galeriaLauncher;
 
+    // variables para editar los platos
+    private Plato platoEdicion = null;
+    private boolean esModoEdicion = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -77,8 +81,43 @@ public class AgregarPlatoActivity extends AppCompatActivity {
                 }
         );
 
+        // DETECTAMOS SI NOS ENVIARON UN PLATO PARA EDITAR
+        if (getIntent().hasExtra("plato_a_editar")) {
+            platoEdicion = (Plato) getIntent().getSerializableExtra("plato_a_editar");
+            if (platoEdicion != null) {
+                esModoEdicion = true;
+                autocompletarCamposEdicion(opcionesCategorias);
+            }
+        }
+
         btnSeleccionar.setOnClickListener(v -> abrirGaleria());
         btnGuardar.setOnClickListener(v -> comenzarProcesoDeGuardado());
+    }
+
+    // METODO AUXILIAR PARA AUTOCOMPLETAR LOS CAMPOS SI ES EDICIÓN
+    private void autocompletarCamposEdicion(String[] opcionesCategorias) {
+        etNombre.setText(platoEdicion.getNombre());
+        etDescripcion.setText(platoEdicion.getDescripcion());
+        etPrecio.setText(String.valueOf(platoEdicion.getPrecio()));
+        btnGuardar.setText("Actualizar Plato");
+
+        // Seleccionar la categoría correcta en el Spinner
+        if (platoEdicion.getTipo() != null) {
+            for (int i = 0; i < opcionesCategorias.length; i++) {
+                if (opcionesCategorias[i].equalsIgnoreCase(platoEdicion.getTipo())) {
+                    spinnerTipo.setSelection(i);
+                    break;
+                }
+            }
+        }
+
+        // Cargar la foto actual de Cloudinary en la previsualización
+        if (platoEdicion.getUrlImagen() != null && !platoEdicion.getUrlImagen().isEmpty()) {
+            Glide.with(this)
+                    .load(platoEdicion.getUrlImagen())
+                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .into(imgPrevisualizacion);
+        }
     }
 
     private void inicializarCloudinary() {
@@ -103,73 +142,86 @@ public class AgregarPlatoActivity extends AppCompatActivity {
         String descripcion = etDescripcion.getText().toString().trim();
         String precioStr = etPrecio.getText().toString().trim();
 
-        if (nombre.isEmpty() || descripcion.isEmpty() || precioStr.isEmpty() || rutaFotoLocal == null) {
-            Toast.makeText(this, "Por favor, completa todos los campos y selecciona una foto", Toast.LENGTH_SHORT).show();
+        // Permitimos que la rutaFotoLocal sea null (significa que deja la foto vieja)
+        if (nombre.isEmpty() || descripcion.isEmpty() || precioStr.isEmpty() || (!esModoEdicion && rutaFotoLocal == null)) {
+            Toast.makeText(this, "Por favor, completa todos los campos", Toast.LENGTH_SHORT).show();
             return;
         }
 
-        // controlamos que seleccione un tipo / categoria
         if (spinnerTipo.getSelectedItemPosition() == 0) {
             Toast.makeText(this, "Por favor, seleccione una categoría válida para el plato", Toast.LENGTH_SHORT).show();
             return;
         }
 
         String tipo = spinnerTipo.getSelectedItem().toString();
-
         double precio = Double.parseDouble(precioStr);
 
-        Toast.makeText(this, "Subiendo imagen...", Toast.LENGTH_SHORT).show();
+        // VERIFICAMOS SI SE VA A SUBIR UNA NUEVA FOTO O SI USA LA ANTERIOR
+        if (rutaFotoLocal != null) {
+            // El usuario seleccionó una foto nueva (o es un plato nuevo) -> Se sube a Cloudinary
+            Toast.makeText(this, "Subiendo imagen...", Toast.LENGTH_SHORT).show();
 
-        MediaManager.get().upload(rutaFotoLocal)
-                .callback(new UploadCallback() {
-                    @Override
-                    public void onStart(String requestId) {}
+            MediaManager.get().upload(rutaFotoLocal)
+                    .callback(new UploadCallback() {
+                        @Override
+                        public void onStart(String requestId) {}
 
-                    @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {}
+                        @Override
+                        public void onProgress(String requestId, long bytes, long totalBytes) {}
 
-                    @Override
-                    public void onSuccess(String requestId, Map resultData) {
-                        String urlImagenCloudinary = (String) resultData.get("secure_url");
+                        @Override
+                        public void onSuccess(String requestId, Map resultData) {
+                            String urlImagenCloudinary = (String) resultData.get("secure_url");
+                            subirPlatoAFirebase(nombre, descripcion, tipo, precio, urlImagenCloudinary);
+                        }
 
-                        // Pasamos también la categoría elegida
-                        subirPlatoAFirebase(nombre, descripcion, tipo, precio, urlImagenCloudinary);
-                    }
+                        @Override
+                        public void onError(String requestId, ErrorInfo error) {
+                            runOnUiThread(() -> Toast.makeText(AgregarPlatoActivity.this, "Error al subir imagen: " + error.getDescription(), Toast.LENGTH_LONG).show());
+                        }
 
-                    @Override
-                    public void onError(String requestId, ErrorInfo error) {
-                        runOnUiThread(() -> Toast.makeText(AgregarPlatoActivity.this, "Error al subir imagen: " + error.getDescription(), Toast.LENGTH_LONG).show());
-                    }
-
-                    @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {}
-                }).dispatch();
+                        @Override
+                        public void onReschedule(String requestId, ErrorInfo error) {}
+                    }).dispatch();
+        } else {
+            // Modo edición sin cambiar la foto -> Usamos la URL que ya tenía el platoEdicion
+            subirPlatoAFirebase(nombre, descripcion, tipo, precio, platoEdicion.getUrlImagen());
+        }
     }
 
     private void subirPlatoAFirebase(String nombre, String descripcion, String tipo, double precio, String urlCloudinary) {
         new Thread(() -> {
-            String idPlato = mFirestore.collection("platos").document().getId();
+            String idPlato;
+            String ratingStr;
+            String tiempoStr;
 
-            // LOGICA ALEATORIA
-            Random random = new Random();
+            if (esModoEdicion) {
+                // MANTENEMOS LOS DATOS ORIGINALES DEL PLATO VIEJO
+                idPlato = platoEdicion.getId();
+                ratingStr = platoEdicion.getRating();
+                tiempoStr = platoEdicion.getTiempo();
+            } else {
+                // Generamos ID y datos aleatorios por única vez solo si es un plato nuevo
+                idPlato = mFirestore.collection("platos").document().getId();
 
-            // Rating aleatorio entre 4.0 y 5.0
-            double ratingRandom = 4.0 + (1.0 * random.nextDouble());
-            String ratingStr = String.format(Locale.US, "%.1f", ratingRandom);
+                Random random = new Random();
+                double ratingRandom = 4.0 + (1.0 * random.nextDouble());
+                ratingStr = String.format(Locale.US, "%.1f", ratingRandom);
 
-            // Tiempo aleatorio entre 10, 15, 20 o 25 minutos
-            int[] tiemposMinutos = {10, 15, 20, 25};
-            int tiempoRandom = tiemposMinutos[random.nextInt(tiemposMinutos.length)];
-            String tiempoStr = tiempoRandom + " MIN";
+                int[] tiemposMinutos = {10, 15, 20, 25};
+                int tiempoRandom = tiemposMinutos[random.nextInt(tiemposMinutos.length)];
+                tiempoStr = tiempoRandom + " MIN";
+            }
 
-            // cramos el objeto nuevoPlato de la clase Plato
-            Plato nuevoPlato = new Plato(idPlato, nombre, descripcion, tipo, ratingStr, tiempoStr, precio, urlCloudinary);
+            // Creamos o actualizamos el objeto plato con el ID correspondiente
+            Plato platoFinal = new Plato(idPlato, nombre, descripcion, tipo, ratingStr, tiempoStr, precio, urlCloudinary);
 
             mFirestore.collection("platos").document(idPlato)
-                    .set(nuevoPlato)
+                    .set(platoFinal)
                     .addOnSuccessListener(aVoid -> {
                         runOnUiThread(() -> {
-                            Toast.makeText(AgregarPlatoActivity.this, "¡Plato guardado con éxito!", Toast.LENGTH_SHORT).show();
+                            String mensaje = esModoEdicion ? "¡Plato actualizado con éxito!" : "¡Plato guardado con éxito!";
+                            Toast.makeText(AgregarPlatoActivity.this, mensaje, Toast.LENGTH_SHORT).show();
                             finish();
                         });
                     })

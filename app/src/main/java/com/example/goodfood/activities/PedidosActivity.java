@@ -21,7 +21,7 @@ public class PedidosActivity extends AppCompatActivity {
     private RecyclerView rvPedidos;
     private TextView tvVacios;
 
-    // 🌟 SOLUCIÓN 1: Inicializamos la lista acá mismo para evitar el NullPointerException
+    // Inicializamos la lista para evitar el NullPointerException
     private List<Map<String, Object>> listaDeMisPedidos = new ArrayList<>();
     private List<Plato> todosLosPlatos;
     private PedidosAdapter adaptador;
@@ -75,12 +75,11 @@ public class PedidosActivity extends AppCompatActivity {
 
                     queryBase.get()
                             .addOnSuccessListener(queryDocumentSnapshots -> {
-                                // Ahora sí, .clear() funciona seguro porque la lista ya existe
                                 listaDeMisPedidos.clear();
 
                                 if (queryDocumentSnapshots != null && !queryDocumentSnapshots.isEmpty()) {
 
-                                    // 🌟 SOLUCIÓN 2: REEMPLAZAMOS EL COMENTARIO POR EL BUCLE REAL QUE LLENA LOS PEDIDOS
+                                    // reemplazamos el texto por los datos reales
                                     for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                                         Map<String, Object> datosPedido = doc.getData();
                                         if (datosPedido != null) {

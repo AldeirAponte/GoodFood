@@ -46,7 +46,6 @@ public class PedidosAdapter extends RecyclerView.Adapter<PedidosAdapter.PedidoVi
         String idCompleto = (String) pedido.get("id_documento");
         String idCorto = (idCompleto != null && idCompleto.length() > 6) ? idCompleto.substring(0, 6).toUpperCase() : "XXXXXX";
 
-        // Si es admin, le mostramos el nombre del cliente al lado del ID del pedido
         String nombreCli = (String) pedido.get("nombreCliente");
         if (esAdmin && nombreCli != null) {
             holder.tvId.setText("Pedido #" + idCorto + " - " + nombreCli);
@@ -79,160 +78,214 @@ public class PedidosAdapter extends RecyclerView.Adapter<PedidosAdapter.PedidoVi
         holder.tvFecha.setText("Tocá para ver el detalle técnico");
 
         holder.itemView.setOnClickListener(v -> {
-            Map<String, Long> itemsCompra = (Map<String, Long>) pedido.get("items");
-            if (itemsCompra != null && !itemsCompra.isEmpty()) {
-                android.content.Context ctx = holder.itemView.getContext();
-                com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(ctx);
+            Object itemsObj = pedido.get("items");
+            if (itemsObj == null) return;
 
-                LinearLayout layoutContenedor = new LinearLayout(ctx);
-                layoutContenedor.setOrientation(LinearLayout.VERTICAL);
-                layoutContenedor.setPadding(48, 60, 48, 60);
-                layoutContenedor.setBackgroundColor(android.graphics.Color.parseColor("#FAFAFA"));
+            android.content.Context ctx = holder.itemView.getContext();
+            com.google.android.material.bottomsheet.BottomSheetDialog bottomSheet = new com.google.android.material.bottomsheet.BottomSheetDialog(ctx);
 
-                TextView tvTitulo = new TextView(ctx);
-                tvTitulo.setText("Productos del Pedido #" + idCorto);
-                tvTitulo.setTextSize(20);
-                tvTitulo.setTypeface(null, android.graphics.Typeface.BOLD);
-                tvTitulo.setTextColor(android.graphics.Color.parseColor("#0A4D34"));
-                tvTitulo.setPadding(0, 10, 0, 20);
-                layoutContenedor.addView(tvTitulo);
+            LinearLayout layoutContenedor = new LinearLayout(ctx);
+            layoutContenedor.setOrientation(LinearLayout.VERTICAL);
+            layoutContenedor.setPadding(48, 60, 48, 60);
+            layoutContenedor.setBackgroundColor(android.graphics.Color.parseColor("#FAFAFA"));
 
-                View lineaDivisoria = new View(ctx);
-                LinearLayout.LayoutParams paramsLinea = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 2);
-                paramsLinea.setMargins(0, 0, 0, 30);
-                lineaDivisoria.setLayoutParams(paramsLinea);
-                lineaDivisoria.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"));
-                layoutContenedor.addView(lineaDivisoria);
+            TextView tvTitulo = new TextView(ctx);
+            tvTitulo.setText("Productos del Pedido #" + idCorto);
+            tvTitulo.setTextSize(20);
+            tvTitulo.setTypeface(null, android.graphics.Typeface.BOLD);
+            tvTitulo.setTextColor(android.graphics.Color.parseColor("#0A4D34"));
+            tvTitulo.setPadding(0, 10, 0, 20);
+            layoutContenedor.addView(tvTitulo);
 
-                RecyclerView rvDetalle = new RecyclerView(ctx);
-                rvDetalle.setLayoutManager(new LinearLayoutManager(ctx));
-                rvDetalle.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
-                    List<String> ids = new ArrayList<>(itemsCompra.keySet());
+            View lineaDivisoria = new View(ctx);
+            LinearLayout.LayoutParams paramsLinea = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 2);
+            paramsLinea.setMargins(0, 0, 0, 30);
+            lineaDivisoria.setLayoutParams(paramsLinea);
+            lineaDivisoria.setBackgroundColor(android.graphics.Color.parseColor("#E0E0E0"));
+            layoutContenedor.addView(lineaDivisoria);
 
-                    @NonNull
-                    @Override
-                    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int vt) {
-                        View f = LayoutInflater.from(p.getContext()).inflate(R.layout.item_carrito, p, false);
-                        return new RecyclerView.ViewHolder(f) {};
-                    }
+            RecyclerView rvDetalle = new RecyclerView(ctx);
+            rvDetalle.setLayoutManager(new LinearLayoutManager(ctx));
 
-                    @Override
-                    public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int pos) {
-                        String pId = ids.get(pos);
-                        long cant = itemsCompra.get(pId);
-                        TextView name = h.itemView.findViewById(R.id.tvNombrePlatoCarrito);
-                        TextView count = h.itemView.findViewById(R.id.tvCantidadCarrito);
-                        TextView sub = h.itemView.findViewById(R.id.tvSubtotalPlato);
-                        ImageView img = h.itemView.findViewById(R.id.imgPlatoCarrito);
+            rvDetalle.setAdapter(new RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
-                        ImageView btnRestar = h.itemView.findViewById(R.id.btnRestarCantidad);
-                        ImageView btnEliminar = h.itemView.findViewById(R.id.btnEliminarPlato);
-                        if (btnRestar != null) btnRestar.setVisibility(View.GONE);
-                        if (btnEliminar != null) btnEliminar.setVisibility(View.GONE);
+                private List<Map<String, Object>> itemsProcesados = new ArrayList<>();
 
-                        Plato platoEncontrado = null;
-                        for (Plato p : todosLosPlatos) {
-                            if ((p.getId() != null && p.getId().equals(pId)) || (p.getNombre() != null && p.getNombre().equals(pId))) {
-                                platoEncontrado = p;
-                                break;
+                {
+                    if (itemsObj instanceof List) {
+                        // clonamos a una lista nueva para desvincularlo totalmente de Firebase y conservar datos
+                        List<Map<String, Object>> listaOriginal = (List<Map<String, Object>>) itemsObj;
+                        for (Map<String, Object> io : listaOriginal) {
+                            Map<String, Object> copiaSegura = new java.util.HashMap<>(io);
+                            itemsProcesados.add(copiaSegura);
+                        }
+                    } else if (itemsObj instanceof Map) {
+                        // si el plato fue borrado del catálogo, le inventamos datos limpios para que no muestre cosas rotas
+                        Map<String, Object> mapViejo = (Map<String, Object>) itemsObj;
+                        for (Map.Entry<String, Object> entry : mapViejo.entrySet()) {
+                            String pId = entry.getKey();
+                            long cant = 1;
+                            if (entry.getValue() instanceof Long) cant = (Long) entry.getValue();
+                            else if (entry.getValue() instanceof Integer) cant = (Integer) entry.getValue();
+
+                            Plato pEncontrado = null;
+                            for (Plato p : todosLosPlatos) {
+                                if ((p.getId() != null && p.getId().equals(pId)) || (p.getNombre() != null && p.getNombre().equals(pId))) {
+                                    pEncontrado = p;
+                                    break;
+                                }
                             }
+
+                            Map<String, Object> itemClonado = new java.util.HashMap<>();
+                            if (pEncontrado != null) {
+                                itemClonado.put("nombre", pEncontrado.getNombre());
+                                itemClonado.put("precioUnitario", pEncontrado.getPrecio());
+                                itemClonado.put("urlImagen", pEncontrado.getUrlImagen());
+                            } else {
+                                itemClonado.put("nombre", "Plato no disponible (Borrado)");
+                                itemClonado.put("precioUnitario", 0.0);
+                                itemClonado.put("urlImagen", "");
+                            }
+                            itemClonado.put("cantidad", cant);
+                            itemsProcesados.add(itemClonado);
                         }
-                        if (platoEncontrado != null) {
-                            name.setText(platoEncontrado.getNombre());
-                            count.setText(String.format(Locale.US, "Cantidad: %d x $%.2f", cant, platoEncontrado.getPrecio()));
-                            sub.setText(String.format(Locale.US, "$%.2f", platoEncontrado.getPrecio() * cant));
-                            Glide.with(h.itemView.getContext()).load(platoEncontrado.getUrlImagen()).placeholder(android.R.drawable.ic_menu_gallery).error(android.R.drawable.stat_notify_error).into(img);
-                        } else {
-                            name.setText("Plato cod: " + pId);
-                            count.setText("Cantidad: " + cant);
-                            sub.setText("$0.00");
-                        }
-                    }
-                    @Override
-                    public int getItemCount() { return ids.size(); }
-                });
-                layoutContenedor.addView(rvDetalle);
-
-                // LOGICA SI ES ADMIN O CLIENTE
-                String estadoActual = (String) pedido.get("estado");
-                if (estadoActual == null) estadoActual = "pendiente";
-
-                if (esAdmin) {
-                    // PANEL DE ADMINISTRADOR: Crear los 3 botones de gestión de estados
-                    TextView tvAdminLabel = new TextView(ctx);
-                    tvAdminLabel.setText("PANEL DE CONTROL ADMIN - Cambiar Estado:");
-                    tvAdminLabel.setTextSize(13);
-                    tvAdminLabel.setTypeface(null, android.graphics.Typeface.BOLD);
-                    tvAdminLabel.setPadding(0, 40, 0, 15);
-                    layoutContenedor.addView(tvAdminLabel);
-
-                    LinearLayout layoutBotonesAdmin = new LinearLayout(ctx);
-                    layoutBotonesAdmin.setOrientation(LinearLayout.HORIZONTAL);
-                    LinearLayout.LayoutParams paramsFila = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
-                    layoutBotonesAdmin.setLayoutParams(paramsFila);
-
-                    // Parámetro para estilos de los botones
-                    LinearLayout.LayoutParams paramsBotonIndividual = new LinearLayout.LayoutParams(0, 110, 1.0f);
-                    paramsBotonIndividual.setMargins(6, 0, 6, 0);
-
-                    // Botón 1: En preparación (Azul)
-                    Button btnPrep = new Button(ctx);
-                    btnPrep.setLayoutParams(paramsBotonIndividual);
-                    btnPrep.setText("Cocina");
-                    btnPrep.setTextSize(11);
-                    btnPrep.setTextColor(android.graphics.Color.WHITE);
-                    btnPrep.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#0288D1")));
-                    if(estadoActual.equalsIgnoreCase("en preparación")) btnPrep.setEnabled(false);
-                    btnPrep.setOnClickListener(b -> actualizarEstadoFirebase(idCompleto, "en preparación", bottomSheet, ctx));
-                    layoutBotonesAdmin.addView(btnPrep);
-
-                    // Botón 2: Entregado (Verde)
-                    Button btnEntregado = new Button(ctx);
-                    btnEntregado.setLayoutParams(paramsBotonIndividual);
-                    btnEntregado.setText("Entregar");
-                    btnEntregado.setTextSize(11);
-                    btnEntregado.setTextColor(android.graphics.Color.WHITE);
-                    btnEntregado.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#2E7D32")));
-                    if(estadoActual.equalsIgnoreCase("entregado")) btnEntregado.setEnabled(false);
-                    btnEntregado.setOnClickListener(b -> actualizarEstadoFirebase(idCompleto, "entregado", bottomSheet, ctx));
-                    layoutBotonesAdmin.addView(btnEntregado);
-
-                    // Botón 3: Cancelado (Gris)
-                    Button btnCancelAdmin = new Button(ctx);
-                    btnCancelAdmin.setLayoutParams(paramsBotonIndividual);
-                    btnCancelAdmin.setText("Cancelar");
-                    btnCancelAdmin.setTextSize(11);
-                    btnCancelAdmin.setTextColor(android.graphics.Color.WHITE);
-                    btnCancelAdmin.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#757575")));
-                    if(estadoActual.equalsIgnoreCase("cancelado")) btnCancelAdmin.setEnabled(false);
-                    btnCancelAdmin.setOnClickListener(b -> actualizarEstadoFirebase(idCompleto, "cancelado", bottomSheet, ctx));
-                    layoutBotonesAdmin.addView(btnCancelAdmin);
-
-                    layoutContenedor.addView(layoutBotonesAdmin);
-
-                } else {
-                    // ROL CLIENTE: Sigue teniendo solo su botón de Cancelar (siempre que esté pendiente)
-                    if (estadoActual.equalsIgnoreCase("pendiente")) {
-                        Button btnCancelarCliente = new Button(ctx);
-                        LinearLayout.LayoutParams paramsBtn = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 130);
-                        paramsBtn.setMargins(0, 40, 0, 10);
-                        btnCancelarCliente.setLayoutParams(paramsBtn);
-                        btnCancelarCliente.setText("Cancelar Pedido");
-                        btnCancelarCliente.setTextColor(android.graphics.Color.WHITE);
-                        btnCancelarCliente.setTypeface(null, android.graphics.Typeface.BOLD);
-                        btnCancelarCliente.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#D32F2F")));
-                        btnCancelarCliente.setOnClickListener(view -> actualizarEstadoFirebase(idCompleto, "cancelado", bottomSheet, ctx));
-                        layoutContenedor.addView(btnCancelarCliente);
                     }
                 }
 
-                bottomSheet.setContentView(layoutContenedor);
-                bottomSheet.show();
+                @NonNull
+                @Override
+                public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup p, int vt) {
+                    View f = LayoutInflater.from(p.getContext()).inflate(R.layout.item_carrito, p, false);
+                    return new RecyclerView.ViewHolder(f) {};
+                }
+
+                @Override
+                public void onBindViewHolder(@NonNull RecyclerView.ViewHolder h, int pos) {
+                    Map<String, Object> itemData = itemsProcesados.get(pos);
+
+                    TextView name = h.itemView.findViewById(R.id.tvNombrePlatoCarrito);
+                    TextView count = h.itemView.findViewById(R.id.tvCantidadCarrito);
+                    TextView sub = h.itemView.findViewById(R.id.tvSubtotalPlato);
+                    ImageView img = h.itemView.findViewById(R.id.imgPlatoCarrito);
+
+                    ImageView btnRestar = h.itemView.findViewById(R.id.btnRestarCantidad);
+                    ImageView btnEliminar = h.itemView.findViewById(R.id.btnEliminarPlato);
+                    if (btnRestar != null) btnRestar.setVisibility(View.GONE);
+                    if (btnEliminar != null) btnEliminar.setVisibility(View.GONE);
+
+                    // 🌟 EXTRACCIÓN DIRECTA Y SEGURA DE LOS DATOS CONGELADOS
+                    String nombrePlato = (String) itemData.get("nombre");
+                    String urlImagen = (String) itemData.get("urlImagen");
+
+                    long cant = 1;
+                    if (itemData.get("cantidad") instanceof Long) {
+                        cant = (Long) itemData.get("cantidad");
+                    } else if (itemData.get("cantidad") instanceof Integer) {
+                        cant = (Integer) itemData.get("cantidad");
+                    }
+
+                    double precioUnitario = 0.0;
+                    if (itemData.get("precioUnitario") instanceof Double) {
+                        precioUnitario = (Double) itemData.get("precioUnitario");
+                    } else if (itemData.get("precioUnitario") instanceof Long) {
+                        precioUnitario = ((Long) itemData.get("precioUnitario")).doubleValue();
+                    } else if (itemData.get("precioUnitario") instanceof Integer) {
+                        precioUnitario = ((Integer) itemData.get("precioUnitario")).doubleValue();
+                    }
+
+                    double subtotal = precioUnitario * cant;
+
+                    name.setText(nombrePlato != null ? nombrePlato : "Plato Desconocido");
+                    count.setText(String.format(Locale.US, "Cantidad: %d x $%.2f", cant, precioUnitario));
+                    sub.setText(String.format(Locale.US, "$%.2f", subtotal));
+
+                    if (urlImagen != null && !urlImagen.isEmpty()) {
+                        Glide.with(h.itemView.getContext())
+                                .load(urlImagen)
+                                .placeholder(android.R.drawable.ic_menu_gallery)
+                                .error(android.R.drawable.stat_notify_error)
+                                .into(img);
+                    } else {
+                        img.setImageResource(android.R.drawable.ic_menu_gallery);
+                    }
+                }
+
+                @Override
+                public int getItemCount() { return itemsProcesados.size(); }
+            });
+            layoutContenedor.addView(rvDetalle);
+
+            String estadoActual = (String) pedido.get("estado");
+            if (estadoActual == null) estadoActual = "pendiente";
+
+            if (esAdmin) {
+                TextView tvAdminLabel = new TextView(ctx);
+                tvAdminLabel.setText("PANEL DE CONTROL ADMIN - Cambiar Estado:");
+                tvAdminLabel.setTextSize(13);
+                tvAdminLabel.setTypeface(null, android.graphics.Typeface.BOLD);
+                tvAdminLabel.setPadding(0, 40, 0, 15);
+                layoutContenedor.addView(tvAdminLabel);
+
+                LinearLayout layoutBotonesAdmin = new LinearLayout(ctx);
+                layoutBotonesAdmin.setOrientation(LinearLayout.HORIZONTAL);
+                LinearLayout.LayoutParams paramsFila = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT);
+                layoutBotonesAdmin.setLayoutParams(paramsFila);
+
+                LinearLayout.LayoutParams paramsBotonIndividual = new LinearLayout.LayoutParams(0, 110, 1.0f);
+                paramsBotonIndividual.setMargins(6, 0, 6, 0);
+
+                Button btnPrep = new Button(ctx);
+                btnPrep.setLayoutParams(paramsBotonIndividual);
+                btnPrep.setText("Cocina");
+                btnPrep.setTextSize(11);
+                btnPrep.setTextColor(android.graphics.Color.WHITE);
+                btnPrep.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#0288D1")));
+                if(estadoActual.equalsIgnoreCase("en preparación")) btnPrep.setEnabled(false);
+                btnPrep.setOnClickListener(b -> actualizarEstadoFirebase(idCompleto, "en preparación", bottomSheet, ctx));
+                layoutBotonesAdmin.addView(btnPrep);
+
+                Button btnEntregado = new Button(ctx);
+                btnEntregado.setLayoutParams(paramsBotonIndividual);
+                btnEntregado.setText("Entregar");
+                btnEntregado.setTextSize(11);
+                btnEntregado.setTextColor(android.graphics.Color.WHITE);
+                btnEntregado.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#2E7D32")));
+                if(estadoActual.equalsIgnoreCase("entregado")) btnEntregado.setEnabled(false);
+                btnEntregado.setOnClickListener(b -> actualizarEstadoFirebase(idCompleto, "entregado", bottomSheet, ctx));
+                layoutBotonesAdmin.addView(btnEntregado);
+
+                Button btnCancelAdmin = new Button(ctx);
+                btnCancelAdmin.setLayoutParams(paramsBotonIndividual);
+                btnCancelAdmin.setText("Cancelar");
+                btnCancelAdmin.setTextSize(11);
+                btnCancelAdmin.setTextColor(android.graphics.Color.WHITE);
+                btnCancelAdmin.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#757575")));
+                if(estadoActual.equalsIgnoreCase("cancelado")) btnCancelAdmin.setEnabled(false);
+                btnCancelAdmin.setOnClickListener(b -> actualizarEstadoFirebase(idCompleto, "cancelado", bottomSheet, ctx));
+                layoutBotonesAdmin.addView(btnCancelAdmin);
+
+                layoutContenedor.addView(layoutBotonesAdmin);
+
+            } else {
+                if (estadoActual.equalsIgnoreCase("pendiente")) {
+                    Button btnCancelarCliente = new Button(ctx);
+                    LinearLayout.LayoutParams paramsBtn = new LinearLayout.LayoutParams(LinearLayout.LayoutParams.MATCH_PARENT, 130);
+                    paramsBtn.setMargins(0, 40, 0, 10);
+                    btnCancelarCliente.setLayoutParams(paramsBtn);
+                    btnCancelarCliente.setText("Cancelar Pedido");
+                    btnCancelarCliente.setTextColor(android.graphics.Color.WHITE);
+                    btnCancelarCliente.setTypeface(null, android.graphics.Typeface.BOLD);
+                    btnCancelarCliente.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#D32F2F")));
+                    btnCancelarCliente.setOnClickListener(view -> actualizarEstadoFirebase(idCompleto, "cancelado", bottomSheet, ctx));
+                    layoutContenedor.addView(btnCancelarCliente);
+                }
             }
+
+            bottomSheet.setContentView(layoutContenedor);
+            bottomSheet.show();
         });
     }
 
-    // Metodo unico auxiliar para actualizar los cambios en la base de datos
     private void actualizarEstadoFirebase(String idDoc, String nuevoEstado, com.google.android.material.bottomsheet.BottomSheetDialog bs, android.content.Context c) {
         FirebaseFirestore.getInstance()
                 .collection("pedidos")

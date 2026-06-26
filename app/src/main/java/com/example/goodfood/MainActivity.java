@@ -34,7 +34,7 @@ public class MainActivity extends AppCompatActivity {
     // Botones de categorías
     private TextView btnCatTodos, btnCatVegano, btnCatCeliacos, btnCatProteicos;
 
-    // Nuevas variables para el Carrito con indicador flotante
+    // variables para el carrito
     private View btnVerCarrito;
     private TextView tvContadorCarrito;
 
@@ -51,23 +51,21 @@ public class MainActivity extends AppCompatActivity {
             getSupportActionBar().hide();
         }
 
-        // 1. Enlazar componentes de la interfaz de usuario
+        // Enlazamos los componentes de la interfaz de usuario
         tvSaludo = findViewById(R.id.tvSaludo);
         rvCatalogo = findViewById(R.id.rvCatalogo);
         fabAgregarPlato = findViewById(R.id.fabAgregarPlato);
         etBuscar = findViewById(R.id.etBuscar);
 
-        // Enlazar los nuevos componentes del Carrito
         btnVerCarrito = findViewById(R.id.btnVerCarrito);
         tvContadorCarrito = findViewById(R.id.tvContadorCarrito);
 
-        // Enlazar botones del menú horizontal
         btnCatTodos = findViewById(R.id.btnCatTodos);
         btnCatVegano = findViewById(R.id.btnCatVegano);
         btnCatCeliacos = findViewById(R.id.btnCatCeliacos);
         btnCatProteicos = findViewById(R.id.btnCatProteicos);
 
-        // 2. Capturar los extras
+        // capturamos los intent
         if (getIntent().hasExtra("nombre_usuario") && getIntent().getStringExtra("nombre_usuario") != null) {
             nombreUsuario = getIntent().getStringExtra("nombre_usuario");
         } else {
@@ -87,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
 
         tvSaludo.setText("¡Hola, " + nombreUsuario + "!");
 
-        // 3. Validación de Rol para Administrador
+        // validar rol para Administrador
         if ("admin".equals(rolUsuario)) {
             fabAgregarPlato.setVisibility(View.VISIBLE);
         } else {
@@ -99,22 +97,22 @@ public class MainActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
-        // Clic para ir a la pantalla del carrito de compras
+        // ir al carrito de compras
         btnVerCarrito.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, com.example.goodfood.activities.CarritoActivity.class);
             intent.putExtra("lista_platos_catalogo", new ArrayList<>(listaPlatos));
             startActivity(intent);
         });
 
-        // 4. Configurar el RecyclerView con la lista filtrada
+        // mostramos la lists filtrada
         rvCatalogo.setLayoutManager(new LinearLayoutManager(this));
         listaPlatos = new ArrayList<>();
         listaFiltrada = new ArrayList<>();
 
-        adaptador = new PlatoAdapter(listaFiltrada);
+        adaptador = new PlatoAdapter(listaFiltrada, rolUsuario);
         rvCatalogo.setAdapter(adaptador);
 
-        // 5. Configurar los listeners para cada botón de categoría
+        // logica de botones para cada categoría
         btnCatTodos.setOnClickListener(v -> {
             categoriaActual = "Todos";
             aplicarFiltrosCombinados();
@@ -132,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
             aplicarFiltrosCombinados();
         });
 
-        // 6. CONFIGURAR EL BUSCADOR EN TIEMPO REAL
+        // logica para el buscador
         etBuscar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -146,7 +144,7 @@ public class MainActivity extends AppCompatActivity {
             public void afterTextChanged(Editable s) {}
         });
 
-        // 7. BARRA DE NAVEGACION INFERIOR
+        // barra inferior con los botones
         com.google.android.material.bottomnavigation.BottomNavigationView bottomNavigation = findViewById(R.id.bottomNavigation);
         bottomNavigation.setSelectedItemId(R.id.nav_home);
 
@@ -155,7 +153,14 @@ public class MainActivity extends AppCompatActivity {
             if (id == R.id.nav_home) {
                 return true;
             } else if (id == R.id.nav_search) {
+                // activamos el buscador de arriba
                 etBuscar.requestFocus();
+
+                // desplegamos el teclado
+                android.view.inputmethod.InputMethodManager imm = (android.view.inputmethod.InputMethodManager) getSystemService(android.content.Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    imm.showSoftInput(etBuscar, android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT);
+                }
                 return true;
             } else if (id == R.id.nav_orders) {
                 Intent intent = new Intent(MainActivity.this, com.example.goodfood.activities.PedidosActivity.class);
@@ -182,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // 8. NUEVO METODO: Refresca el circulito rojo flotante con los cambios del CarritoManager
+    // contador de platos en el carrito de compras
     public void actualizarInterfazCarrito() {
         int cantidadTotal = CarritoManager.getInstance().getCantidadTotal();
         if (cantidadTotal > 0) {
@@ -193,6 +198,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    // cargamos el menu
     private void cargarMenu() {
         Thread cargarPlatos = new Thread(new Runnable() {
             @Override
@@ -210,7 +216,6 @@ public class MainActivity extends AppCompatActivity {
                                         for (com.google.firebase.firestore.DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                                             Plato plato = doc.toObject(Plato.class);
                                             if (plato != null) {
-                                                // le metemos el ID del documento de Firestore si el objeto no lo trae
                                                 if (plato.getId() == null || plato.getId().isEmpty()) {
                                                     plato.setId(doc.getId());
                                                 }
@@ -218,7 +223,6 @@ public class MainActivity extends AppCompatActivity {
                                             }
                                         }
                                     } else {
-                                        // por si llegara a fallar la base de datos con los platos ponemos unos 3 platos de ejemplo
                                         Toast.makeText(MainActivity.this, "Catálogo vacío. Cargando menú local.", Toast.LENGTH_SHORT).show();
                                         listaPlatos.add(new Plato("1", "Ensalada Caesar de Pollo", "Pollo premium, lechuga orgánica, croutons integrales.", "Vegano", "4.7", "10 MIN", 4500.0, "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=500"));
                                         listaPlatos.add(new Plato("2", "Wrap Veggie de Palta", "Tortilla integral, palta, tomates cherry, espinaca.", "Celíacos", "4.6", "15 MIN", 3800.0, "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500"));

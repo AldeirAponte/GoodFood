@@ -181,7 +181,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
     private void irAlInicio(String nombreUsuario, String rol) {
-        Toast.makeText(LoginActivity.this, "¡Bienvenido!" + nombreUsuario, Toast.LENGTH_SHORT).show();
+        Toast.makeText(LoginActivity.this, "¡Bienvenido! " + nombreUsuario, Toast.LENGTH_SHORT).show();
         Intent intent = new Intent(LoginActivity.this, MainActivity.class);
         intent.putExtra("nombre_usuario", nombreUsuario);
         intent.putExtra("rol_usuario", rol);

@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class CarritoManager {
     private static CarritoManager instance;
-    // Guarda: ID del plato -> Cantidad seleccionada
+    // ID del plato -> Cantidad seleccionada
     private Map<String, Integer> itemsCarrito;
 
     private CarritoManager() {

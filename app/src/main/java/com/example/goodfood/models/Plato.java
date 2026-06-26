@@ -1,7 +1,6 @@
 package com.example.goodfood.models;
 
-// 🌟 Al agregar "implements java.io.Serializable", Java ya sabe cómo empaquetar
-// este objeto para mandarlo entre pantallas a través de los Intents.
+// "implements java.io.Serializable", para poder empaquetar la clase
 public class Plato implements java.io.Serializable {
     private String id;
     private String nombre;

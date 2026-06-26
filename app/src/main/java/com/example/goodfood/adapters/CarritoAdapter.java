@@ -119,8 +119,8 @@ public class CarritoAdapter extends RecyclerView.Adapter<CarritoAdapter.CarritoV
             tvCantidad = itemView.findViewById(R.id.tvCantidadCarrito);
             tvSubtotal = itemView.findViewById(R.id.tvSubtotalPlato);
             imgPlato = itemView.findViewById(R.id.imgPlatoCarrito);
-            btnRestar = itemView.findViewById(R.id.btnRestarCantidad); // Vincular
-            btnEliminar = itemView.findViewById(R.id.btnEliminarPlato); // Vincular
+            btnRestar = itemView.findViewById(R.id.btnRestarCantidad);
+            btnEliminar = itemView.findViewById(R.id.btnEliminarPlato);
         }
     }
 }

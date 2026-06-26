@@ -42,18 +42,18 @@ public class RegistroActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_registro);
 
-        // 1. Inicializar Firebase
+        // Inicializar Firebase
         mAuth = FirebaseAuth.getInstance();
         mFirestore = FirebaseFirestore.getInstance();
 
-        // 2. Configurar el inicio de sesión con Google
+        // Configurar el inicio de sesión con Google
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken("365154847322-el7i3kfkft262i43tvc5r3laicb7uko8.apps.googleusercontent.com")
                 .requestEmail()
                 .build();
         mGoogleSignInClient = GoogleSignIn.getClient(this, gso);
 
-        // 3. Enlazar componentes de la interfaz
+        // Enlazamos los componentes de la interfaz
         etNombre = findViewById(R.id.etNombre);
         etEmail = findViewById(R.id.etEmail);
         etPassword = findViewById(R.id.etPassword);
@@ -62,7 +62,7 @@ public class RegistroActivity extends AppCompatActivity {
         btnGoogle = findViewById(R.id.btnGoogle);
         tvIrALogin = findViewById(R.id.tvIrALogin);
 
-        // 4. Registrar el lanzador para el resultado de Google
+        // Registramos el resultado de Google
         googleSignInLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
                 result -> {
@@ -82,12 +82,12 @@ public class RegistroActivity extends AppCompatActivity {
 
         // añadimos el evento para que redirija al login
         tvIrALogin.setOnClickListener(v -> {
-            Intent intent = new Intent(RegistroActivity.this, LoginActivity.class); // <-- Cambiá LoginActivity por el nombre exacto de tu clase de Login si varía
+            Intent intent = new Intent(RegistroActivity.this, LoginActivity.class);
             startActivity(intent);
-            finish(); // Cerramos Registro para que no quede acumulada en el historial de pantallas
+            finish();
         });
 
-        // 5. Clic del botón clásico (Email y Contraseña)
+        //  logica del botón clásico (Email y Contraseña)
         btnRegistrar.setOnClickListener(v -> {
             String nombre = etNombre.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
@@ -105,7 +105,7 @@ public class RegistroActivity extends AppCompatActivity {
             }
         });
 
-        // 6. Clic del botón de Google
+        // logica del botón de Google
         btnGoogle.setOnClickListener(v -> {
             Intent signInIntent = mGoogleSignInClient.getSignInIntent();
             googleSignInLauncher.launch(signInIntent);
@@ -142,7 +142,7 @@ public class RegistroActivity extends AppCompatActivity {
                 });
     }
 
-    // METODO ACTUALIZADO PARA GUARDAR EN FIRESTORE USANDO LA CLASE USUARIO
+    // logica para guardar los datos del usuario en la base de datos
     private void guardarDatosEnFirestore(String uid, String nombre, String email) {
         // Creamos la instancia del objeto directamente
         Usuario nuevoUsuario = new Usuario(uid, nombre, email, "cliente");

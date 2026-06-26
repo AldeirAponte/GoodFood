@@ -40,12 +40,12 @@ public class PerfilActivity extends AppCompatActivity {
             getSupportActionBar().hide();
         }
 
-        // Inicializar Firebase
+        // inicializamos Firebase
         mAuth = FirebaseAuth.getInstance();
         db = FirebaseFirestore.getInstance();
         FirebaseUser user = mAuth.getCurrentUser();
 
-        // Enlazar vistas
+        // Enlazamos vistas
         tvNombre = findViewById(R.id.tvPerfilNombre);
         tvEmail = findViewById(R.id.tvPerfilEmail);
         btnVolver = findViewById(R.id.btnVolver);
@@ -55,7 +55,7 @@ public class PerfilActivity extends AppCompatActivity {
         btnGuardar = findViewById(R.id.btnGuardarDatos);
         btnCerrarSesion = findViewById(R.id.btnCerrarSesion);
 
-        // Enlazar los nuevos botones de lápiz
+        // Enlazamos los nuevos botones de lápiz
         btnEditarDireccion = findViewById(R.id.btnEditarDireccion);
         btnEditarTelefono = findViewById(R.id.btnEditarTelefono);
 
@@ -63,34 +63,34 @@ public class PerfilActivity extends AppCompatActivity {
             usuarioId = user.getUid();
             tvEmail.setText(user.getEmail());
 
-            // Primero ponemos el nombre de Firebase Auth como auxilio temporal
+            // Primero ponemos el nombre de Firebase Auth como ayuda temporal
             if (user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
                 tvNombre.setText(user.getDisplayName());
             } else {
                 tvNombre.setText("Cargando...");
             }
 
-            // Cargar datos guardados previamente en Firestore (si existen)
+            // Cargar datos guardados previamente en Firestore (solo si existen)
             cargarDatosGuardados();
         }
 
-        // Lógica de los Lápices de Edición
+        // Logica de los Lapices de Edicion
         btnEditarDireccion.setOnClickListener(v -> {
-            etDireccion.setEnabled(true); // Habilitamos escritura
-            etDireccion.requestFocus();   // Llevamos el cursor ahí
-            btnGuardar.setVisibility(View.VISIBLE); // Mostramos botón guardar
+            etDireccion.setEnabled(true);
+            etDireccion.requestFocus();
+            btnGuardar.setVisibility(View.VISIBLE);
         });
 
         btnEditarTelefono.setOnClickListener(v -> {
-            etTelefono.setEnabled(true);  // Habilitamos escritura
-            etTelefono.requestFocus();    // Llevamos el cursor ahí
-            btnGuardar.setVisibility(View.VISIBLE); // Mostramos botón guardar
+            etTelefono.setEnabled(true);
+            etTelefono.requestFocus();
+            btnGuardar.setVisibility(View.VISIBLE);
         });
 
-        // Listener para Guardar Datos
+        // logica para Guardar Datos
         btnGuardar.setOnClickListener(v -> guardarDatosEnFirestore());
 
-        // Listener para Cerrar Sesión
+        // logica para Cerrar Sesión
         btnCerrarSesion.setOnClickListener(v -> cerrarSesion());
 
         // Botón Volver
@@ -101,31 +101,27 @@ public class PerfilActivity extends AppCompatActivity {
         db.collection("usuarios").document(usuarioId).get()
                 .addOnSuccessListener(documentSnapshot -> {
                     if (documentSnapshot.exists()) {
-                        // 1. Cargamos el Nombre real desde Firestore
+                        // Cargamos el Nombre real desde Firestore
                         String nombreFirestore = documentSnapshot.getString("nombre");
                         if (nombreFirestore != null && !nombreFirestore.isEmpty()) {
                             tvNombre.setText(nombreFirestore);
                         }
 
-                        // 2. Cargamos el Rol (Admin / Cliente) y lo sumamos al diseño
+                        // Cargamos el Rol (Admin / Cliente) y lo sumamos al diseño
                         String rol = documentSnapshot.getString("rol");
                         if (rol != null) {
-                            ivRolIcono.setVisibility(View.VISIBLE); // Hacemos visible el icono de rol
+                            ivRolIcono.setVisibility(View.VISIBLE);
 
                             if (rol.equalsIgnoreCase("admin") || rol.equalsIgnoreCase("administrador")) {
-                                // Setea el icono nativo de herramientas/configuración para el Administrador
                                 ivRolIcono.setImageResource(android.R.drawable.ic_menu_preferences);
-                                // Le aplicamos un color verde oscuro que combine con GoodFood
                                 ivRolIcono.setColorFilter(android.graphics.Color.parseColor("#0A4D34"));
                             } else {
-                                // Setea el icono nativo de persona/cuenta para el Cliente estándar
                                 ivRolIcono.setImageResource(android.R.drawable.ic_menu_myplaces);
-                                // Le aplicamos un color verde más claro/brillante
                                 ivRolIcono.setColorFilter(android.graphics.Color.parseColor("#2E7D32"));
                             }
                         }
 
-                        // 3. Cargamos los campos de texto normales
+                        // Cargamos los campos de texto normales
                         String direccion = documentSnapshot.getString("direccion");
                         String telefono = documentSnapshot.getString("telefono");
                         if (direccion != null) etDireccion.setText(direccion);
@@ -142,16 +138,37 @@ public class PerfilActivity extends AppCompatActivity {
         datosUsuario.put("direccion", direccion);
         datosUsuario.put("telefono", telefono);
 
-        db.collection("usuarios").document(usuarioId).set(datosUsuario, com.google.firebase.firestore.SetOptions.merge())
-                .addOnSuccessListener(aVoid -> {
-                    Toast.makeText(PerfilActivity.this, "Datos guardados correctamente", Toast.LENGTH_SHORT).show();
+        FirebaseUser user = mAuth.getCurrentUser();
+        if (user != null) {
+            // configuramos el id de usuario dentro del documento
+            datosUsuario.put("id", usuarioId);
+            datosUsuario.put("email", user.getEmail());
 
-                    // Dejar la interfaz limpia otra vez
-                    etDireccion.setEnabled(false); // Volver a bloquear
-                    etTelefono.setEnabled(false);  // Volver a bloquear
-                    btnGuardar.setVisibility(View.GONE); // Desaparecer el botón guardar de forma estética
-                })
-                .addOnFailureListener(e -> Toast.makeText(PerfilActivity.this, "Error al guardar los datos", Toast.LENGTH_SHORT).show());
+            String nombreActual = tvNombre.getText().toString();
+            if (!nombreActual.isEmpty() && !nombreActual.equalsIgnoreCase("Cargando...")) {
+                datosUsuario.put("nombre", nombreActual);
+            } else if (user.getDisplayName() != null && !user.getDisplayName().isEmpty()) {
+                datosUsuario.put("nombre", user.getDisplayName());
+            }
+
+            db.collection("usuarios").document(usuarioId).get().addOnSuccessListener(documentSnapshot -> {
+                if (!documentSnapshot.exists() || !documentSnapshot.contains("rol")) {
+                    datosUsuario.put("rol", "cliente");
+                }
+
+                db.collection("usuarios").document(usuarioId).set(datosUsuario, com.google.firebase.firestore.SetOptions.merge())
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(PerfilActivity.this, "Datos guardados correctamente", Toast.LENGTH_SHORT).show();
+
+                            etDireccion.setEnabled(false);
+                            etTelefono.setEnabled(false);
+                            btnGuardar.setVisibility(View.GONE);
+
+                            cargarDatosGuardados();
+                        })
+                        .addOnFailureListener(e -> Toast.makeText(PerfilActivity.this, "Error al guardar los datos", Toast.LENGTH_SHORT).show());
+            });
+        }
     }
 
     private void cerrarSesion() {
